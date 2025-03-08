@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>College Inventory & Exam Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="min-h-screen">
+        <nav class="bg-teal-600 text-white p-4">
+            <div class="container mx-auto flex justify-between items-center">
+                <h1 class="text-2xl font-bold">College Management System</h1>
+                <div class="space-x-4">
+                    <button onclick="showTab('inventory')" class="px-4 py-2 hover:bg-teal-700 rounded">Inventory</button>
+                    <button onclick="showTab('exam')" class="px-4 py-2 hover:bg-teal-700 rounded">Exam Management</button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Inventory Management -->
+        <div id="inventory" class="tab-content active container mx-auto p-4">
+            <div class="bg-white rounded-lg shadow p-6 mb-6">
+                <h2 class="text-xl font-bold mb-4">Add New Inventory Item</h2>
+                <form id="inventoryForm" class="space-y-4">
+                    <div>
+                        <label class="block mb-2">Item Name</label>
+                        <input type="text" id="itemName" required class="w-full p-2 border rounded">
+                    </div>
+                    <div>
+                        <label class="block mb-2">Quantity</label>
+                        <input type="number" id="quantity" required class="w-full p-2 border rounded">
+                    </div>
+                    <div>
+                        <label class="block mb-2">Purchase Date</label>
+                        <input type="date" id="purchaseDate" required class="w-full p-2 border rounded">
+                    </div>
+                    <button type="submit" class="bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700">Add Item</button>
+                </form>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-bold mb-4">Inventory List</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full table-auto">
+                        <thead>
+                            <tr class="bg-gray-100">
+                                <th class="px-4 py-2">Item Name</th>
+                                <th class="px-4 py-2">Quantity</th>
+                                <th class="px-4 py-2">Purchase Date</th>
+                                <th class="px-4 py-2">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryList"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Exam Management -->
+        <div id="exam" class="tab-content container mx-auto p-4">
+            <div class="bg-white rounded-lg shadow p-6 mb-6">
+                <h2 class="text-xl font-bold mb-4">Question Management</h2>
+                <form id="questionForm" class="space-y-4">
+                    <div>
+                        <label class="block mb-2">Question</label>
+                        <textarea id="question" required class="w-full p-2 border rounded"></textarea>
+                    </div>
+                    <div>
+                        <label class="block mb-2">Options (comma-separated)</label>
+                        <input type="text" id="options" required class="w-full p-2 border rounded" placeholder="Option 1, Option 2, Option 3, Option 4">
+                    </div>
+                    <div>
+                        <label class="block mb-2">Correct Answer</label>
+                        <input type="text" id="correctAnswer" required class="w-full p-2 border rounded">
+                    </div>
+                    <button type="submit" class="bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700">Add Question</button>
+                </form>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-bold mb-4">Question Bank</h2>
+                <div id="questionList" class="space-y-4"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab Management
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        // Inventory Management
+        let inventory = JSON.parse(localStorage.getItem('inventory')) || [];
+
+        document.getElementById('inventoryForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const newItem = {
+                id: Date.now(),
+                name: document.getElementById('itemName').value,
+                quantity: document.getElementById('quantity').value,
+                purchaseDate: document.getElementById('purchaseDate').value
+            };
+            inventory.push(newItem);
+            localStorage.setItem('inventory', JSON.stringify(inventory));
+            renderInventory();
+            this.reset();
+        });
+
+        function deleteInventoryItem(id) {
+            inventory = inventory.filter(item => item.id !== id);
+            localStorage.setItem('inventory', JSON.stringify(inventory));
+            renderInventory();
+        }
+
+        function renderInventory() {
+            const list = document.getElementById('inventoryList');
+            list.innerHTML = inventory.map(item => `
+                <tr>
+                    <td class="border px-4 py-2">${item.name}</td>
+                    <td class="border px-4 py-2">${item.quantity}</td>
+                    <td class="border px-4 py-2">${item.purchaseDate}</td>
+                    <td class="border px-4 py-2">
+                        <button onclick="deleteInventoryItem(${item.id})" class="text-red-600 hover:text-red-800">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Exam Management
+        let questions = JSON.parse(localStorage.getItem('questions')) || [];
+
+        document.getElementById('questionForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const newQuestion = {
+                id: Date.now(),
+                question: document.getElementById('question').value,
+                options: document.getElementById('options').value.split(',').map(opt => opt.trim()),
+                correctAnswer: document.getElementById('correctAnswer').value
+            };
+            questions.push(newQuestion);
+            localStorage.setItem('questions', JSON.stringify(questions));
+            renderQuestions();
+            this.reset();
+        });
+
+        function deleteQuestion(id) {
+            questions = questions.filter(q => q.id !== id);
+            localStorage.setItem('questions', JSON.stringify(questions));
+            renderQuestions();
+        }
+
+        function renderQuestions() {
+            const list = document.getElementById('questionList');
+            list.innerHTML = questions.map(q => `
+                <div class="border p-4 rounded">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="font-bold">${q.question}</p>
+                            <ul class="list-disc ml-6 mt-2">
+                                ${q.options.map(opt => `<li>${opt}</li>`).join('')}
+                            </ul>
+                            <p class="mt-2 text-green-600">Correct Answer: ${q.correctAnswer}</p>
+                        </div>
+                        <button onclick="deleteQuestion(${q.id})" class="text-red-600 hover:text-red-800">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Initial render
+        renderInventory();
+        renderQuestions();
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
